@@ -1,0 +1,25 @@
+# Use the flexible environment for stable WebSocket support (Socket.IO)
+runtime: nodejs
+env: flex
+
+# Specify a supported Node.js minor version for the flexible runtime
+runtime_config:
+  node_version: "22"
+
+# Start the backend server from the backend folder
+entrypoint: npm --prefix backend start
+
+# Optional: tweak scaling as needed
+# automatic_scaling:
+#   max_instances: 3
+#   min_instances: 0
+
+# Environment variables for production
+env_variables:
+  NODE_ENV: "production"
+  # FRONTEND_URL: "https://<your-frontend-domain>"
+  # MONGO_URL: "<set-in-GCP-or-here>"
+  # JWT_SECRET: "<set-in-GCP-or-here>"
+  # CLOUDINARY_CLOUD_NAME: "<set-in-GCP-or-here>"
+  # CLOUDINARY_API_KEY: "<set-in-GCP-or-here>"
+  # CLOUDINARY_API_SECRET: "<set-in-GCP-or-here>"

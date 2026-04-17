@@ -1,0 +1,16 @@
+# This file tells gcloud which files to ignore when uploading source.
+# It is created to keep deployments small and secure.
+
+# Node related
+**/node_modules/
+npm-debug.log
+
+# Git
+.git/
+.gitignore
+
+# Env files (do NOT upload secrets)
+**/.env
+
+# Build outputs (frontend build is needed, but it will be generated in GCP via gcp-build)
+frontend/dist/
