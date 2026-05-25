@@ -24,7 +24,7 @@ const ChatContainer = () => {
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
   
-  const isPartnerTyping = selectedUser ? typingUsers[selectedUser._id] : false;
+  const isPartnerTyping = selectedUser && !selectedUser.isGroup ? typingUsers[selectedUser._id] : false;
   
   // Lightbox state
   const [activeImage, setActiveImage] = useState(null);
@@ -111,14 +111,24 @@ const ChatContainer = () => {
           </div>
         ) : (
           filteredMessages?.map((message, index) => {
-            const isFromMe = message.senderId === authUser?._id;
+            const msgSenderId = typeof message.senderId === "object" ? message.senderId?._id : message.senderId;
+            const isFromMe = String(msgSenderId) === String(authUser?._id);
             const isLastFromMe = isFromMe && index === filteredMessages.length - 1;
+
+            const senderPic = isFromMe 
+              ? (authUser?.profilePic || "/avatar.png") 
+              : (message.senderId?.profilePic || selectedUser?.profilePic || "/avatar.png");
+            
+            const senderName = isFromMe 
+              ? 'You' 
+              : (message.senderId?.fullName || selectedUser?.fullName || 'Member');
+
             return (
               <div key={message._id} className={`flex ${isFromMe ? "justify-end" : "justify-start"}`} >
                 <div className={`flex items-start space-x-2 max-w-xs sm:max-w-md ${isFromMe ? "flex-row-reverse space-x-reverse" : "flex-row"}`}>
                   {/* Avatar */}
                   <img 
-                    src={isFromMe ? (authUser?.profilePic || "/avatar.png") : (selectedUser?.profilePic || "/avatar.png")} 
+                    src={senderPic} 
                     alt="avatar" 
                     className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                   />
@@ -127,7 +137,7 @@ const ChatContainer = () => {
                   <div className="flex flex-col space-y-1">
                     {/* Name */}
                     <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {isFromMe ? 'You' : selectedUser?.fullName}
+                      {senderName}
                     </div>
                     
                     {/* Message content */}
@@ -170,7 +180,7 @@ const ChatContainer = () => {
                         {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       </div>
 
-                      {isLastFromMe && (
+                      {isLastFromMe && !selectedUser?.isGroup && (
                         message.isRead ? (
                           <img
                             src={selectedUser?.profilePic || "/avatar.png"}

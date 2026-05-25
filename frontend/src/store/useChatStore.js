@@ -6,8 +6,10 @@ import { useAuthStore } from "./useAuthStore.js";
 export const useChatStore = create((set, get) => ({
     messages: [],
     users: [],
+    groups: [],
     selectedUser: null,
     isUsersLoading: false,
+    isGroupsLoading: false,
     isMessagesLoading: false,
     typingUsers: {},
     setTypingUsers: (userId, isTyping) => {
@@ -31,6 +33,32 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    getGroups: async () => {
+        set({ isGroupsLoading: true });
+        try {
+            const res = await axiosInstance.get("/groups");
+            set({ groups: res.data });
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+            toast.error("Failed to load groups");
+        } finally {
+            set({ isGroupsLoading: false });
+        }
+    },
+
+    createGroup: async (groupData) => {
+        try {
+            const res = await axiosInstance.post("/groups/create", groupData);
+            set((state) => ({ groups: [res.data, ...state.groups] }));
+            toast.success("Group created successfully!");
+            return res.data;
+        } catch (error) {
+            console.error('Error creating group:', error);
+            toast.error(error.response?.data?.message || "Failed to create group");
+            throw error;
+        }
+    },
+
     getMessages: async (userId) => {
         set({ isMessagesLoading: true });
         try {
@@ -45,8 +73,11 @@ export const useChatStore = create((set, get) => ({
             console.log('Messages response:', res.data);
             set({ messages: res.data });
 
-            // Clear unread counts in database
-            await axiosInstance.put(`/messages/read/${userId}`);
+            // Clear unread counts in database for direct chats
+            const { selectedUser } = get();
+            if (selectedUser && !selectedUser.isGroup) {
+                await axiosInstance.put(`/messages/read/${userId}`);
+            }
         } catch (error) {
             console.error('Error fetching messages:', error);
             toast.error("Failed to load messages");
@@ -56,6 +87,8 @@ export const useChatStore = create((set, get) => ({
     },
 
     markAsRead: async (userId) => {
+        const { selectedUser } = get();
+        if (selectedUser && selectedUser.isGroup) return; // Skip read receipts for groups
         try {
             await axiosInstance.put(`/messages/read/${userId}`);
         } catch (error) {
@@ -86,27 +119,33 @@ export const useChatStore = create((set, get) => ({
         if (!socket) return;
         
         socket.on("newMessage", (newMessage) => {
-            const senderId = String(newMessage.senderId);
-            const receiverId = String(newMessage.receiverId);
+            const senderIdObj = newMessage.senderId;
+            const senderId = String(senderIdObj?._id || senderIdObj);
+            const receiverId = String(newMessage.receiverId || "");
             const selectedId = String(selectedUser._id);
             const myId = String(authUser?._id);
-            const isForThisChat =
-                (senderId === selectedId && receiverId === myId) ||
-                (senderId === myId && receiverId === selectedId);
+
+            const isForThisChat = selectedUser.isGroup
+                ? String(newMessage.groupId) === selectedId
+                : (senderId === selectedId && receiverId === myId) ||
+                  (senderId === myId && receiverId === selectedId);
+
             if (!isForThisChat) return;
             set({ messages: [...get().messages, newMessage] });
 
-            // If we are currently in this chat and receive a message from the partner, mark it as read immediately
-            if (senderId === selectedId) {
+            // If we are currently in this direct chat and receive a message from the partner, mark it as read immediately
+            if (!selectedUser.isGroup && senderId === selectedId) {
                 get().markAsRead(selectedId);
             }
         });
 
         // Listen for messagesRead event
         socket.on("messagesRead", ({ readerId }) => {
+            if (selectedUser.isGroup) return;
             if (String(readerId) === String(selectedUser._id)) {
                 const updatedMessages = get().messages.map((msg) => {
-                    if (String(msg.senderId) === String(authUser?._id)) {
+                    const msgSenderId = String(msg.senderId?._id || msg.senderId);
+                    if (msgSenderId === String(authUser?._id)) {
                         return { ...msg, isRead: true };
                     }
                     return msg;

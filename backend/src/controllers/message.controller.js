@@ -1,5 +1,6 @@
 import User from "../models/user.model.js"
 import Message from "../models/message.model.js"
+import Group from "../models/group.model.js"
 import cloudinary from "../lib/cloudinary.js"
 import {getReceiverSocketId , io } from "../lib/socket.js"
 
@@ -16,46 +17,47 @@ export const getUsersForSidebar = async (req, res) => {
 
 export const getMessages = async (req, res) => {
     try {
-        const {id : userToChatId} = req.params
+        const {id : chatTargetId} = req.params
         const myId = req.user._id
 
-        // Debug logging
-        console.log("getMessages Debug:", {
-            userToChatId,
-            myId,
-            paramsId: req.params.id,
-            userId: req.user?._id
-        })
-
-        // Validate required parameters
         if (!myId) {
             return res.status(401).json({message: "User not authenticated"})
         }
         
-        if (!userToChatId) {
-            return res.status(400).json({message: "User ID parameter is required"})
+        if (!chatTargetId) {
+            return res.status(400).json({message: "Target ID parameter is required"})
         }
 
-        const messages = await Message.find({
-            $or:[
-                {senderId: myId, receiverId: userToChatId},
-                {senderId: userToChatId, receiverId: myId}
-            ]
-        })
-        
-        // Mark all unread messages from the other user as read
-        await Message.updateMany(
-            { senderId: userToChatId, receiverId: myId, isRead: false },
-            { $set: { isRead: true } }
-        );
+        // Check if the target is a Group
+        const isGroup = await Group.findById(chatTargetId);
 
-        // Notify the sender that messages have been read
-        const senderSocketId = getReceiverSocketId(userToChatId);
-        if (senderSocketId) {
-            io.to(senderSocketId).emit("messagesRead", { readerId: myId });
+        let messages;
+        if (isGroup) {
+            // Fetch group messages
+            messages = await Message.find({ groupId: chatTargetId })
+                .populate("senderId", "fullName profilePic");
+        } else {
+            // Fetch direct messages
+            messages = await Message.find({
+                $or:[
+                    {senderId: myId, receiverId: chatTargetId},
+                    {senderId: chatTargetId, receiverId: myId}
+                ]
+            }).populate("senderId", "fullName profilePic");
+            
+            // Mark all unread messages from the other user as read
+            await Message.updateMany(
+                { senderId: chatTargetId, receiverId: myId, isRead: false },
+                { $set: { isRead: true } }
+            );
+
+            // Notify the sender that messages have been read
+            const senderSocketId = getReceiverSocketId(chatTargetId);
+            if (senderSocketId) {
+                io.to(senderSocketId).emit("messagesRead", { readerId: myId });
+            }
         }
 
-        console.log(`Found ${messages.length} messages between users`)
         res.status(200).json(messages)
 
     } catch (error) {
@@ -67,7 +69,7 @@ export const getMessages = async (req, res) => {
 export const sendMessages = async (req, res) => {
     try {
         const { text, image, voice } = req.body
-        const { id: receiverId } = req.params
+        const { id: chatTargetId } = req.params
         const senderId = req.user._id
         
         let imageURL
@@ -86,24 +88,51 @@ export const sendMessages = async (req, res) => {
             voiceURL = uploadResponse.secure_url
         }
 
-        const newMessage = new Message({
-            senderId,
-            receiverId,
-            text,
-            image: imageURL,
-            voice: voiceURL
-        })
+        // Check if the target is a Group
+        const group = await Group.findById(chatTargetId);
 
-        await newMessage.save()
-
-        // Realtime: notify both receiver and sender
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        const senderSocketId = getReceiverSocketId(senderId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
+        let newMessage;
+        if (group) {
+            newMessage = new Message({
+                senderId,
+                groupId: chatTargetId,
+                text,
+                image: imageURL,
+                voice: voiceURL
+            });
+        } else {
+            newMessage = new Message({
+                senderId,
+                receiverId: chatTargetId,
+                text,
+                image: imageURL,
+                voice: voiceURL
+            });
         }
-        if (senderSocketId) {
-            io.to(senderSocketId).emit("newMessage", newMessage);
+
+        await newMessage.save();
+        
+        // Populate sender metadata so frontend has instant access
+        await newMessage.populate("senderId", "fullName profilePic");
+
+        if (group) {
+            // Realtime: notify all group members
+            group.members.forEach((memberId) => {
+                const memberSocketId = getReceiverSocketId(memberId);
+                if (memberSocketId) {
+                    io.to(memberSocketId).emit("newMessage", newMessage);
+                }
+            });
+        } else {
+            // Realtime: notify both receiver and sender
+            const receiverSocketId = getReceiverSocketId(chatTargetId);
+            const senderSocketId = getReceiverSocketId(senderId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newMessage", newMessage);
+            }
+            if (senderSocketId && senderSocketId !== receiverSocketId) {
+                io.to(senderSocketId).emit("newMessage", newMessage);
+            }
         }
 
         res.status(200).json(newMessage)
