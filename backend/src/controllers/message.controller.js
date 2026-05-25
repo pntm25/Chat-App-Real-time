@@ -54,7 +54,7 @@ export const getMessages = async (req, res) => {
 
 export const sendMessages = async (req, res) => {
     try {
-        const { text, image } = req.body
+        const { text, image, voice } = req.body
         const { id: receiverId } = req.params
         const senderId = req.user._id
         
@@ -64,11 +64,18 @@ export const sendMessages = async (req, res) => {
             imageURL = uploadResponse.secure_url
         }
 
+        let voiceURL
+        if(voice){
+            const uploadResponse = await cloudinary.uploader.upload(voice, { resource_type: "auto" })
+            voiceURL = uploadResponse.secure_url
+        }
+
         const newMessage = new Message({
             senderId,
             receiverId,
             text,
-            image: imageURL
+            image: imageURL,
+            voice: voiceURL
         })
 
         await newMessage.save()

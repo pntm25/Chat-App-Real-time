@@ -1,11 +1,13 @@
 import { useChatStore } from "../store/useChatStore";
 import { useThemeStore } from "../store/useThemeStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./Skeletons/MessageSkeleton";
 import { useAuthStore } from "../store/useAuthStore";
+import VoicePlayer from "./VoicePlayer";
+import ImageLightbox from "./ImageLightbox";
 
 const ChatContainer = () => {
   const { theme } = useThemeStore();
@@ -16,9 +18,13 @@ const ChatContainer = () => {
     selectedUser,
     subscribeToNewMessages,
     unsubscribeFromNewMessages,
+    searchQuery,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  
+  // Lightbox state
+  const [activeImage, setActiveImage] = useState(null);
 
   useEffect(() => {
     if (selectedUser?._id) {
@@ -35,6 +41,32 @@ const ChatContainer = () => {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  // Keyword highlighting function
+  const highlightText = (text, search) => {
+    if (!search || !search.trim()) return text;
+    const regex = new RegExp(`(${search})`, "gi");
+    const parts = text.split(regex);
+    return (
+      <span>
+        {parts.map((part, i) =>
+          part.toLowerCase() === search.toLowerCase() ? (
+            <mark key={i} className="bg-yellow-300 dark:bg-yellow-500 text-black px-0.5 rounded font-medium">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </span>
+    );
+  };
+
+  // Filter messages dynamically based on search query
+  const filteredMessages = messages?.filter((message) => {
+    if (!searchQuery || !searchQuery.trim()) return true;
+    return message.text?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   if (!selectedUser) {
     return (
@@ -64,27 +96,27 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className={`flex flex-col flex-1 h-full ${
+    <div className={`flex flex-col flex-1 h-full relative ${
       theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'
     }`}>
       <ChatHeader />
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-        {messages?.length === 0 ? (
-          <div className="text-center text-gray-500">
-            No messages yet. Start the conversation!
+        {filteredMessages?.length === 0 ? (
+          <div className="text-center text-gray-500 py-8">
+            {searchQuery ? "No matching messages found in history." : "No messages yet. Start the conversation!"}
           </div>
         ) : (
-          messages?.map((message) => {
+          filteredMessages?.map((message) => {
             const isFromMe = message.senderId === authUser?._id;
             return (
               <div key={message._id} className={`flex ${isFromMe ? "justify-end" : "justify-start"}`} >
-                <div className={`flex items-start space-x-2 max-w-xs ${isFromMe ? "flex-row-reverse space-x-reverse" : "flex-row"}`}>
+                <div className={`flex items-start space-x-2 max-w-xs sm:max-w-md ${isFromMe ? "flex-row-reverse space-x-reverse" : "flex-row"}`}>
                   {/* Avatar */}
                   <img 
                     src={isFromMe ? (authUser?.profilePic || "/avatar.png") : (selectedUser?.profilePic || "/avatar.png")} 
                     alt="avatar" 
-                    className="w-8 h-8 rounded-full flex-shrink-0"
+                    className="w-8 h-8 rounded-full flex-shrink-0 object-cover"
                   />
                   
                   {/* Message bubble */}
@@ -94,23 +126,39 @@ const ChatContainer = () => {
                       {isFromMe ? 'You' : selectedUser?.fullName}
                     </div>
                     
-                    {/* Message */}
-                    <div className={`p-3 rounded-lg ${
-                      isFromMe 
-                        ? "bg-blue-500 text-white rounded-tr-none"
-                        : theme === 'dark' 
-                          ? "bg-gray-700 text-white rounded-tl-none" 
-                          : "bg-gray-200 text-gray-900 rounded-tl-none"
-                    }`}>
-                      {message.image && (
+                    {/* Message content */}
+                    {message.text === "[Sticker]" && message.image ? (
+                      <div className="p-0 bg-transparent shadow-none select-none">
                         <img
                           src={message.image}
-                          alt="Attachment"
-                          className="max-w-[200px] rounded-md mb-2"
+                          alt="Sticker"
+                          className="w-28 h-28 sm:w-32 sm:h-32 object-contain hover:scale-105 transition-transform duration-200 cursor-default"
                         />
-                      )}
-                      {message.text && <p>{message.text}</p>}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className={`p-3 rounded-2xl ${
+                        isFromMe 
+                          ? "bg-blue-500 text-white rounded-tr-none"
+                          : theme === 'dark' 
+                            ? "bg-gray-700 text-white rounded-tl-none" 
+                            : "bg-gray-200 text-gray-900 rounded-tl-none"
+                      }`}>
+                        {message.image && (
+                          <img
+                            src={message.image}
+                            alt="Attachment"
+                            className="max-w-[200px] sm:max-w-[280px] rounded-lg mb-2 cursor-zoom-in hover:opacity-95 transition-opacity duration-150"
+                            onClick={() => setActiveImage(message.image)}
+                          />
+                        )}
+                        
+                        {message.voice && (
+                          <VoicePlayer src={message.voice} />
+                        )}
+
+                        {message.text && <p className="leading-relaxed break-words">{highlightText(message.text, searchQuery)}</p>}
+                      </div>
+                    )}
                     
                     {/* Time */}
                     <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -126,7 +174,13 @@ const ChatContainer = () => {
       </div>
 
       <MessageInput />
+
+      {/* Image Lightbox Overlay */}
+      {activeImage && (
+        <ImageLightbox src={activeImage} onClose={() => setActiveImage(null)} />
+      )}
     </div>
   );
 };
+
 export default ChatContainer;

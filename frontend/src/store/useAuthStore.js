@@ -113,11 +113,46 @@ export const useAuthStore = create((set, get) => ({
     socket.on("onlineUsers", (userIds) => {
       set({ onlineUsers : userIds });
     });
+
+    // WebRTC call signaling listeners
+    socket.on("incoming-call", ({ from, offer, callType, callerInfo }) => {
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().handleIncomingCall({ from, offer, callType, callerInfo });
+      });
+    });
+
+    socket.on("call-accepted", ({ answer }) => {
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().handleCallAccepted({ answer });
+      });
+    });
+
+    socket.on("ice-candidate", ({ candidate }) => {
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().handleNewIceCandidate({ candidate });
+      });
+    });
+
+    socket.on("end-call", () => {
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().endCall(false);
+      });
+    });
+
+    socket.on("reject-call", () => {
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().handleCallRejected();
+      });
+    });
   },
   
   disconnectSocket: () => {
     if(get().socket?.connected){
       get().socket.disconnect();
     }
+    // Clean up call states
+    import("./useCallStore.js").then(({ useCallStore }) => {
+      useCallStore.getState().endCall(false);
+    });
   }
 }))

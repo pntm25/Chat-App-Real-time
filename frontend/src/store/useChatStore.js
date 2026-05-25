@@ -87,4 +87,6 @@ export const useChatStore = create((set, get) => ({
     },
 
     setSelectedUser: (selectedUser) => set({ selectedUser }),
+    searchQuery: "",
+    setSearchQuery: (searchQuery) => set({ searchQuery }),
 }));
