@@ -5,14 +5,22 @@ import { Image, Send, X, Mic, Trash2, Smile } from "lucide-react";
 import toast from "react-hot-toast";
 
 const STICKERS = [
-  { id: "s1", name: "Cute Cat Hello", url: "https://media.giphy.com/media/du1Lz5wgQ1cBnHezp9/giphy.gif" },
-  { id: "s2", name: "Happy Bunny", url: "https://media.giphy.com/media/1gP0hMv7bWn67Nn3bF/giphy.gif" },
-  { id: "s3", name: "Love Hearts", url: "https://media.giphy.com/media/3oz8xAFtqo0BcnsZH2/giphy.gif" },
-  { id: "s4", name: "Dog Thumbs Up", url: "https://media.giphy.com/media/3o7TKoWXm3okO1kgdW/giphy.gif" },
-  { id: "s5", name: "Dancing Banana", url: "https://media.giphy.com/media/3o7aD2saalBwwZsYus/giphy.gif" },
-  { id: "s6", name: "Party Time", url: "https://media.giphy.com/media/3o6gaR5162PuwZ4cda/giphy.gif" },
-  { id: "s7", name: "Crying Bear", url: "https://media.giphy.com/media/3oEduQ3Ku3IapqgOD6/giphy.gif" },
-  { id: "s8", name: "Meme Yes", url: "https://media.giphy.com/media/l0IpYf339umS9z9a8/giphy.gif" }
+  { id: "s1", name: "Cute Peach Cat", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/du1Lz5wgQ1cBnHezp9/giphy.gif" },
+  { id: "s2", name: "Happy Quby Pentol", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDd6dmgyczB4aDRlOHpjc3p6dmpyM3E2am5maDhwdGR1YXZ0bWlqNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/K3S0mx6coApx3KSSpL/giphy.gif" },
+  { id: "s3", name: "Heart Pop Rabbit", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzg1bmswbTJ2dmVsbWFidnltd245ZDRuMzBhbzJ5OWw0Y3ZtNGEyOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/9J3zMocWq7GgUWPvW1/giphy.gif" },
+  { id: "s4", name: "Shiba Roll Cute", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbDVtc2FhZnFna2J0eWF0bTZtdTNvd291Zjlydm82YmxscDFpdjRwaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/c12rZ39Yg3fSE/giphy.gif" },
+  { id: "s5", name: "Cute Dinosaur Clap", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaG96cTV4YWphY2dtczc3czZtdTZwM3d2Mnl3bmV6cTgwMTN0dnphayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/UQ1667F8D40w1eMoc8/giphy.gif" },
+  { id: "s6", name: "Panda Cute Wave", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWZ5a3N2bmQ0ZzFjNGN1a3QzaWtsNGdzN3BhbWh3ZXRiaXk3anp5ZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/l3q2t2KAQQvscCqWs/giphy.gif" },
+  { id: "s7", name: "Pikachu Happy Dance", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdzB0dng1dDVwdjdwMGphd3ExOXo0N3p1amJ1aWRpdTdyZHhtMDZtNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/12SAy0RvZyrlTy/giphy.gif" },
+  { id: "s8", name: "Among Us Dance", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcWRocGNpdW10eGJrdTBxdGRtNHpsd3kyZTBjZGx6Y3hpYWRyMTBiaSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/lR1L96mR3G6K7a5p7f/giphy.gif" },
+  { id: "s9", name: "Bouncing Cat Cute", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdnd2M3N4aTRpYjFwMDB1ZDF2ZzZ4dGR5MG4wODg3dThlMTc3bXl3NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/yFQ0ywscgobJK/giphy.gif" },
+  { id: "s10", name: "Dancing Duck", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExd2Jjc3Z3NDMwdTZwcmJ6NDR4bm5tbnU1dW5maDJpMXptYzN6aWN0eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/134Vp1a9MT18B2/giphy.gif" },
+  { id: "s11", name: "Crying Bear Heart", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3oEduQ3Ku3IapqgOD6/giphy.gif" },
+  { id: "s12", name: "Dog Thumbs Up", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3o7TKoWXm3okO1kgdW/giphy.gif" },
+  { id: "s13", name: "Cute Strawberry Spin", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmQxbXQzdzI4dmJmNDJ2NXpsaWZpOXlqd2c0NnphZThwdHl0bzkwZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3oEdv3Ul8g6ClIG1q0/giphy.gif" },
+  { id: "s14", name: "Love Hearts Cute", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/3oz8xAFtqo0BcnsZH2/giphy.gif" },
+  { id: "s15", name: "Funny Reaction Cat", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/l0IpYf339umS9z9a8/giphy.gif" },
+  { id: "s16", name: "Happy Bunny Wave", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3BndmdnaW44d2d4d293dDFmZDVxb3M4eG92Y2U0Z2x6ZTB0OW9hNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/1gP0hMv7bWn67Nn3bF/giphy.gif" }
 ];
 
 
