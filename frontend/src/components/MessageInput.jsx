@@ -5,21 +5,21 @@ import { Image, Send, X, Mic, Trash2, Smile } from "lucide-react";
 import toast from "react-hot-toast";
 
 const STICKERS = [
-  { id: "s1", name: "Tears of Joy", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Face%20With%20Tears%20Of%20Joy.webp" },
-  { id: "s2", name: "Heart Eyes", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Smiling%20Face%20With%20Heart-Eyes.webp" },
-  { id: "s3", name: "Blow Kiss", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Face%20Blowing%20A%20Kiss.webp" },
-  { id: "s4", name: "Partying Face", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Partying%20Face.webp" },
-  { id: "s5", name: "Loudly Crying", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Loudly%20Crying%20Face.webp" },
+  { id: "s1", name: "Tears of Joy", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Face%20With%20Tears%20Of%20Joy.webp" },
+  { id: "s2", name: "Heart Eyes", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Smiling%20Face%20With%20Hearts.webp" },
+  { id: "s3", name: "Blow Kiss", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Face%20Blowing%20A%20Kiss.webp" },
+  { id: "s4", name: "Partying Face", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Partying%20Face.webp" },
+  { id: "s5", name: "Loudly Crying", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Loudly%20Crying%20Face.webp" },
   { id: "s6", name: "Thumbs Up", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Thumbs%20Up.webp" },
   { id: "s7", name: "Waving Hand", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Waving%20Hand.webp" },
-  { id: "s8", name: "Thinking Face", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Thinking%20Face.webp" },
-  { id: "s9", name: "Screaming Fear", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Face%20Screaming%20In%20Fear.webp" },
-  { id: "s10", name: "Star Struck", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/People/Star-Struck.webp" },
-  { id: "s11", name: "Fire Flame", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Activity/Fire.webp" },
-  { id: "s12", name: "Red Heart", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Love/Red%20Heart.webp" },
-  { id: "s13", name: "See No Evil Monkey", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/See-No-Evil%20Monkey.webp" },
+  { id: "s8", name: "Thinking Face", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Thinking%20Face.webp" },
+  { id: "s9", name: "Screaming Fear", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Face%20Screaming%20In%20Fear.webp" },
+  { id: "s10", name: "Star Struck", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Star%20Struck.webp" },
+  { id: "s11", name: "Fire Flame", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Fire.webp" },
+  { id: "s12", name: "Red Heart", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Symbols/Red%20Heart.webp" },
+  { id: "s13", name: "See No Evil Monkey", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/See%20No%20Evil%20Monkey.webp" },
   { id: "s14", name: "Cute Dog Face", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Dog%20Face.webp" },
-  { id: "s15", name: "Smiling Cat", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Animals%20and%20Nature/Grinning%20Cat%20Face.webp" },
+  { id: "s15", name: "Smiling Cat", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Smileys/Grinning%20Cat.webp" },
   { id: "s16", name: "Rocket Fly", url: "https://raw.githubusercontent.com/Tarikul-Islam-Anik/Telegram-Animated-Emojis/main/Travel%20and%20Places/Rocket.webp" }
 ];
 
