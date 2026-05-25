@@ -72,8 +72,12 @@ export const sendMessages = async (req, res) => {
         
         let imageURL
         if(image){
-            const uploadResponse = await cloudinary.uploader.upload(image)
-            imageURL = uploadResponse.secure_url
+            if(image.startsWith("http://") || image.startsWith("https://")){
+                imageURL = image;
+            } else {
+                const uploadResponse = await cloudinary.uploader.upload(image)
+                imageURL = uploadResponse.secure_url
+            }
         }
 
         let voiceURL
