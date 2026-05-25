@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { Image, Send, X, Mic, Trash2, Smile } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -19,8 +20,23 @@ const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef(null);
-  const { sendMessage } = useChatStore();
+  const { sendMessage, selectedUser } = useChatStore();
+  const socket = useAuthStore((state) => state.socket);
   const [isStickerOpen, setIsStickerOpen] = useState(false);
+
+  // Typing state refs
+  const typingTimeoutRef = useRef(null);
+  const isTypingEmitRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (socket && selectedUser && isTypingEmitRef.current) {
+        socket.emit("typing", { to: selectedUser._id, isTyping: false });
+        isTypingEmitRef.current = false;
+      }
+    };
+  }, [selectedUser?._id, socket]);
 
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -64,9 +80,39 @@ const MessageInput = () => {
       setText("");
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
+
+      // Clear typing indicator immediately
+      if (socket && selectedUser && isTypingEmitRef.current) {
+        socket.emit("typing", { to: selectedUser._id, isTyping: false });
+        isTypingEmitRef.current = false;
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
     }
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setText(val);
+
+    if (!socket || !selectedUser) return;
+
+    // If not currently marked as typing, emit event
+    if (!isTypingEmitRef.current && val.trim().length > 0) {
+      isTypingEmitRef.current = true;
+      socket.emit("typing", { to: selectedUser._id, isTyping: true });
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Set timeout to stop typing after 1.5s of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingEmitRef.current) {
+        isTypingEmitRef.current = false;
+        socket.emit("typing", { to: selectedUser._id, isTyping: false });
+      }
+    }, 1500);
   };
 
   const handleSendSticker = async (stickerUrl) => {
@@ -300,7 +346,7 @@ const MessageInput = () => {
               className="w-full input input-bordered rounded-lg input-sm sm:input-md"
               placeholder="Type a message..."
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={handleInputChange}
               disabled={isRecording}
             />
           </div>

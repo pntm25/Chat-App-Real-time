@@ -19,9 +19,12 @@ const ChatContainer = () => {
     subscribeToNewMessages,
     unsubscribeFromNewMessages,
     searchQuery,
+    typingUsers,
   } = useChatStore();
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
+  
+  const isPartnerTyping = selectedUser ? typingUsers[selectedUser._id] : false;
   
   // Lightbox state
   const [activeImage, setActiveImage] = useState(null);
@@ -107,8 +110,9 @@ const ChatContainer = () => {
             {searchQuery ? "No matching messages found in history." : "No messages yet. Start the conversation!"}
           </div>
         ) : (
-          filteredMessages?.map((message) => {
+          filteredMessages?.map((message, index) => {
             const isFromMe = message.senderId === authUser?._id;
+            const isLastFromMe = isFromMe && index === filteredMessages.length - 1;
             return (
               <div key={message._id} className={`flex ${isFromMe ? "justify-end" : "justify-start"}`} >
                 <div className={`flex items-start space-x-2 max-w-xs sm:max-w-md ${isFromMe ? "flex-row-reverse space-x-reverse" : "flex-row"}`}>
@@ -160,9 +164,24 @@ const ChatContainer = () => {
                       </div>
                     )}
                     
-                    {/* Time */}
-                    <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-                      {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    {/* Time & Read Status */}
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <div className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+                        {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </div>
+
+                      {isLastFromMe && (
+                        message.isRead ? (
+                          <img
+                            src={selectedUser?.profilePic || "/avatar.png"}
+                            alt="Seen"
+                            className="w-3.5 h-3.5 rounded-full object-cover border border-base-100"
+                            title="Seen"
+                          />
+                        ) : (
+                          <span className="text-zinc-500 text-[10px] font-semibold select-none" title="Sent">✓</span>
+                        )
+                      )}
                     </div>
                   </div>
                 </div>
@@ -170,6 +189,28 @@ const ChatContainer = () => {
             );
           })
         )}
+        
+        {/* Real-time Partner Typing Indicator Bubble */}
+        {isPartnerTyping && (
+          <div className="flex items-start space-x-2 p-1 max-w-xs animate-pulse">
+            <img
+              src={selectedUser?.profilePic || "/avatar.png"}
+              alt="avatar"
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+            />
+            <div className="flex flex-col space-y-1">
+              <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                {selectedUser?.fullName}
+              </div>
+              <div className="bg-gray-200 dark:bg-gray-800 px-4 py-2.5 rounded-2xl rounded-tl-none flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={messageEndRef} />
       </div>
 

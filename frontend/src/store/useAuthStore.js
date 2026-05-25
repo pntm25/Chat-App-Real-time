@@ -144,6 +144,35 @@ export const useAuthStore = create((set, get) => ({
         useCallStore.getState().handleCallRejected();
       });
     });
+
+    // Request Notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.permission !== "denied" && Notification.requestPermission();
+    }
+
+    // Typing socket event listener
+    socket.on("typing", ({ from, isTyping }) => {
+      import("./useChatStore.js").then(({ useChatStore }) => {
+        useChatStore.getState().setTypingUsers(from, isTyping);
+      });
+    });
+
+    // Background push notifications on new message
+    socket.on("newMessage", (newMessage) => {
+      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        import("./useChatStore.js").then(({ useChatStore }) => {
+          const sender = useChatStore.getState().users.find((u) => String(u._id) === String(newMessage.senderId));
+          if (sender) {
+            const senderName = sender.fullName;
+            const content = newMessage.text || (newMessage.image ? "[Attachment]" : newMessage.voice ? "[Voice Message]" : "Sticker");
+            new Notification(senderName, {
+              body: content,
+              icon: sender.profilePic || "/avatar.png"
+            });
+          }
+        });
+      }
+    });
   },
   
   disconnectSocket: () => {

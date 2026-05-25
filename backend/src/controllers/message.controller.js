@@ -43,6 +43,18 @@ export const getMessages = async (req, res) => {
             ]
         })
         
+        // Mark all unread messages from the other user as read
+        await Message.updateMany(
+            { senderId: userToChatId, receiverId: myId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        // Notify the sender that messages have been read
+        const senderSocketId = getReceiverSocketId(userToChatId);
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("messagesRead", { readerId: myId });
+        }
+
         console.log(`Found ${messages.length} messages between users`)
         res.status(200).json(messages)
 
@@ -94,5 +106,27 @@ export const sendMessages = async (req, res) => {
     } catch (error) {
         console.error("Error in sendMessages controller: ", error.message)
         res.status(400).json({message: "Internal Server Error"})
+    }
+}
+
+export const markMessagesAsRead = async (req, res) => {
+    try {
+        const { id: userToChatId } = req.params
+        const myId = req.user._id
+
+        await Message.updateMany(
+            { senderId: userToChatId, receiverId: myId, isRead: false },
+            { $set: { isRead: true } }
+        )
+
+        const senderSocketId = getReceiverSocketId(userToChatId)
+        if (senderSocketId) {
+            io.to(senderSocketId).emit("messagesRead", { readerId: myId })
+        }
+
+        res.status(200).json({ success: true })
+    } catch (error) {
+        console.error("Error in markMessagesAsRead: ", error.message)
+        res.status(500).json({ message: "Internal Server Error" })
     }
 }

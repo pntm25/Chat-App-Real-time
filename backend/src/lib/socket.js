@@ -83,6 +83,16 @@ io.on("connection", (socket) => {
             io.to(targetSocketId).emit("reject-call");
         }
     });
+
+    socket.on("typing", ({ to, isTyping }) => {
+        const receiverSocketId = getReceiverSocketId(to);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit("typing", {
+                from: userId,
+                isTyping
+            });
+        }
+    });
 });
 
 export { io, app, httpServer };

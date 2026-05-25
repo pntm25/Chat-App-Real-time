@@ -20,6 +20,10 @@ const messageSchema = new mongoose.Schema(
         },
         voice:{
             type: String
+        },
+        isRead:{
+            type: Boolean,
+            default: false
         }
     },
     {

@@ -9,6 +9,12 @@ export const useChatStore = create((set, get) => ({
     selectedUser: null,
     isUsersLoading: false,
     isMessagesLoading: false,
+    typingUsers: {},
+    setTypingUsers: (userId, isTyping) => {
+        set((state) => ({
+            typingUsers: { ...state.typingUsers, [userId]: isTyping }
+        }));
+    },
 
     getUsers: async () => {
         set({ isUsersLoading: true });
@@ -38,11 +44,22 @@ export const useChatStore = create((set, get) => ({
             const res = await axiosInstance.get(`/messages/${userId}`);
             console.log('Messages response:', res.data);
             set({ messages: res.data });
+
+            // Clear unread counts in database
+            await axiosInstance.put(`/messages/read/${userId}`);
         } catch (error) {
             console.error('Error fetching messages:', error);
             toast.error("Failed to load messages");
         } finally {
             set({ isMessagesLoading: false });
+        }
+    },
+
+    markAsRead: async (userId) => {
+        try {
+            await axiosInstance.put(`/messages/read/${userId}`);
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
         }
     },
 
@@ -67,6 +84,7 @@ export const useChatStore = create((set, get) => ({
         if (!selectedUser) return;
         const { socket, authUser } = useAuthStore.getState();
         if (!socket) return;
+        
         socket.on("newMessage", (newMessage) => {
             const senderId = String(newMessage.senderId);
             const receiverId = String(newMessage.receiverId);
@@ -77,6 +95,24 @@ export const useChatStore = create((set, get) => ({
                 (senderId === myId && receiverId === selectedId);
             if (!isForThisChat) return;
             set({ messages: [...get().messages, newMessage] });
+
+            // If we are currently in this chat and receive a message from the partner, mark it as read immediately
+            if (senderId === selectedId) {
+                get().markAsRead(selectedId);
+            }
+        });
+
+        // Listen for messagesRead event
+        socket.on("messagesRead", ({ readerId }) => {
+            if (String(readerId) === String(selectedUser._id)) {
+                const updatedMessages = get().messages.map((msg) => {
+                    if (String(msg.senderId) === String(authUser?._id)) {
+                        return { ...msg, isRead: true };
+                    }
+                    return msg;
+                });
+                set({ messages: updatedMessages });
+            }
         });
     },
 
@@ -84,6 +120,7 @@ export const useChatStore = create((set, get) => ({
         const socket = useAuthStore.getState().socket;
         if(!socket) return;
         socket.off("newMessage");
+        socket.off("messagesRead");
     },
 
     setSelectedUser: (selectedUser) => set({ selectedUser }),
