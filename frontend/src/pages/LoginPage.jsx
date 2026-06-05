@@ -65,8 +65,11 @@ const LoginPage = () => {
             </div>
 
             <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium text-slate-200">Password</span>
+              <label className="label flex justify-between items-center">
+                <span className={`label-text font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>Password</span>
+                <Link to="/forgot-password" className="text-sm text-blue-500 hover:text-blue-400 font-medium">
+                  Forgot password?
+                </Link>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

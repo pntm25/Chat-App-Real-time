@@ -2,6 +2,8 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 import cloudinary from "../lib/cloudinary.js"
+import crypto from "crypto";
+import { sendResetPasswordEmail } from "../lib/email.js";
 
 export const signup = async (req, res) => {
     const {fullName, email, password} = req.body
@@ -113,3 +115,77 @@ export const checkAuth = async (req, res) => {
         res.status(500).json({message: "Internal Server Error"})
     }
 }
+
+export const forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "No user found with this email" });
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(20).toString("hex");
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
+        await user.save();
+
+        // Create reset URL
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
+
+        // Send email
+        const emailResult = await sendResetPasswordEmail(email, resetLink);
+
+        // In development mode, if it's fallback (SMTP not configured), return the link in response
+        if (process.env.NODE_ENV === "development" && emailResult.fallback) {
+            return res.status(200).json({
+                message: "Password reset link generated. Since SMTP is not configured, you can test using the link below.",
+                resetLink: resetLink,
+                isDev: true
+            });
+        }
+
+        res.status(200).json({ message: "Password reset email sent successfully" });
+    } catch (error) {
+        console.log("Error in forgotPassword controller", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+    try {
+        if (!password || password.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters" });
+        }
+
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired password reset token" });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Update password and clear token fields
+        user.password = hashedPassword;
+        user.resetPasswordToken = "";
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successful. You can now login with your new password." });
+    } catch (error) {
+        console.log("Error in resetPassword controller", error.message);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};

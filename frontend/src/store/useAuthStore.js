@@ -11,6 +11,8 @@ export const useAuthStore = create((set, get) => ({
     isLoggingIn: false,
     isUpdatingProfile: false,
     isCheckingAuth: true,
+    isSendingResetEmail: false,
+    isResettingPassword: false,
     onlineUsers: [],
     socket: null,
     
@@ -176,12 +178,40 @@ export const useAuthStore = create((set, get) => ({
   },
   
   disconnectSocket: () => {
-    if(get().socket?.connected){
-      get().socket.disconnect();
+      if(get().socket?.connected){
+        get().socket.disconnect();
+      }
+      // Clean up call states
+      import("./useCallStore.js").then(({ useCallStore }) => {
+        useCallStore.getState().endCall(false);
+      });
+    },
+
+    forgotPassword: async (email) => {
+        set({ isSendingResetEmail: true });
+        try {
+            const res = await axiosInstance.post("/auth/forgot-password", { email });
+            toast.success(res.data.message || "Password reset email sent!");
+            return res.data;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to send reset email");
+            return null;
+        } finally {
+            set({ isSendingResetEmail: false });
+        }
+    },
+
+    resetPassword: async (token, password) => {
+        set({ isResettingPassword: true });
+        try {
+            const res = await axiosInstance.post(`/auth/reset-password/${token}`, { password });
+            toast.success(res.data.message || "Password reset successfully!");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to reset password");
+            return false;
+        } finally {
+            set({ isResettingPassword: false });
+        }
     }
-    // Clean up call states
-    import("./useCallStore.js").then(({ useCallStore }) => {
-      useCallStore.getState().endCall(false);
-    });
-  }
 }))
